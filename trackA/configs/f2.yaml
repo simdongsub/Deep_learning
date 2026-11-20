@@ -1,0 +1,7 @@
+# F2 · Concat → FC (정보 손실 없음, 파라미터 최다)
+name: f2_concat
+head:
+  type: f2
+  levels: [1, 2, 3]
+  dim: 64
+  proj: linear

@@ -1,0 +1,3 @@
+# A2 · 가중치 학습 여부: 균등 α(1/3) 고정 — "학습"이 효과의 원인인가
+name: a2_f3_uniform
+head: {type: f3, levels: [1, 2, 3], dim: 64, proj: linear, learn_alpha: false}

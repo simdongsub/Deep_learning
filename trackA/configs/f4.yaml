@@ -1,0 +1,8 @@
+# F4 · Attention Gating (SE 모듈 응용, 입력별 채널 게이트) — Track A 핵심 설계
+name: f4_gate
+head:
+  type: f4
+  levels: [1, 2, 3]
+  dim: 64
+  proj: linear
+  reduction: 4

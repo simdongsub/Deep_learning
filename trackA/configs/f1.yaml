@@ -1,0 +1,7 @@
+# F1 · 더하기 (z1 + z2 + z3) → FC
+name: f1_add
+head:
+  type: f1
+  levels: [1, 2, 3]
+  dim: 64
+  proj: linear
