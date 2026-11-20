@@ -1,0 +1,11 @@
+epochs: 100
+batch_size: 128
+optimizer: SGD
+momentum: 0.9
+weight_decay: 0.0005
+learning_rates: [0.05, 0.1, 0.2]
+scheduler: CosineAnnealingLR
+seeds: [0, 1, 2]
+split_seed: 2026
+ratios: [100, 25, 10]
+workers: 2
