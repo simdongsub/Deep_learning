@@ -1,4 +1,0 @@
-# A4 · 기울기 전달: 중간층 경로에 stop-gradient
-#      효과가 표현 결합 때문인지, 최적화 도움 때문인지 분리 (H3 검증)
-name: a4_f4_stopgrad
-head: {type: f4, levels: [1, 2, 3], dim: 64, proj: linear, reduction: 4, stop_grad: true}

@@ -1,8 +1,0 @@
-# F3 · 학습형 가중합 (Softmax 스칼라 α1~α3)
-name: f3_weighted
-head:
-  type: f3
-  levels: [1, 2, 3]
-  dim: 64
-  proj: linear
-  learn_alpha: true

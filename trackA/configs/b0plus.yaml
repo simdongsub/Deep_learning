@@ -1,7 +1,0 @@
-# B0+ · 파라미터 맞춤 통제군 — "파라미터가 늘어서 좋아진 것"인지 구분한다.
-# hidden 값은 scripts/param_match.py 로 비교 대상(head 파라미터 최다 설정)에 맞춰 정한 뒤 적는다.
-#   python -m scripts.param_match --target configs/f4.yaml  ->  hidden: 356
-name: b0plus
-head:
-  type: b0plus
-  hidden: 64

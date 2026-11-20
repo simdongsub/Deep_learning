@@ -1,6 +1,0 @@
-# 위험 1 대응 · Skip 연결 없는 Plain-20 에서 같은 비교를 반복한다.
-#   python -m src.train --config configs/plain20.yaml   (B0 상당)
-name: plain20_b0
-arch: plain20
-head:
-  type: b0
