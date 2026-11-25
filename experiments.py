@@ -10,6 +10,15 @@ from statistics import mean
 from model import MODELS
 from utils import ROOT, load_config, write_csv, write_json
 
+CORE_OWNERS = {
+    "B0": "동섭",
+    "B0+": "동섭",
+    "F1": "환호",
+    "F2": "환호",
+    "F3": "현성",
+    "F4": "현성",
+}
+
 
 def record(run_id, model, ratio, seed, lr, epochs, owner, results, checkpoints, extra=()):
     command = ["train.py", "--model", model, "--ratio", str(ratio), "--seed", str(seed),
@@ -86,7 +95,7 @@ def main():
             choices = {int(ratio): value["lr"] for ratio, value in json.load(file).items()}
     rows = [
         record(core_id(model, ratio, seed, lr), model, ratio, seed, lr, epochs,
-               {"B0": "A", "B0+": "B", "F1": "B", "F2": "C", "F3": "C", "F4": "C"}[model],
+               CORE_OWNERS[model],
                results, checkpoints)
         for ratio, model, seed in product(ratios, MODELS, seeds if args.action == "core" else seeds[:1])
         for lr in ([choices[ratio]] if args.action == "core" else rates)
