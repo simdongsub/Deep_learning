@@ -99,7 +99,7 @@ GPU 실행 PR을 부탁할 때는 생성된 CSV에서 **실제 실행 ID 하나*
 | [x] | 주제 제안 | 현성 | HS-01: 질문과 H1~H3, 데이터셋·트랙·반증 조건 |
 | [ ] | 베이스라인 재현 | 동섭 | DS-03·04·06: B0 1 Epoch, Drive 저장·재개, 정식 B0와 공개 수치 비교 |
 | [ ] | 중간 점검 · 모델 | 환호 | HH-03: 6개 모델 Forward/Backward와 파라미터, Ablation 옵션 |
-| [ ] | 중간 점검 · 설계 | 현성 | HS-02: 고정 변인, 동일 튜닝, 실행표 |
+| [x] | 중간 점검 · 설계 | 현성 | HS-02: 고정 변인, 동일 튜닝, 실행표 |
 | [ ] | 실험·분석 | 현성 | HS-05: 시드별 로그, 평균 ± SD, 학습 곡선, Ablation과 내부 가중치 |
 | [ ] | 최종 발표 | 현성 | HS-06: 최종 표·그래프, 보고서, 발표 자료, DS-07의 재현 기록 |
 
@@ -321,3 +321,11 @@ git push
   - 코드 대조 결과 `experiments.py`·`ablation.py`의 `owner` 매핑이 구 임시값(`A/B/C`)으로 남아 있어 HS-02·HS-03에서 §6 기준으로 수정 예정.
 - **리소스 계획(11/25 기준):** Colab GPU 할당량 초기화에 따라 `100/25/10%` 전체(108건) 유지로 시작하고, 한도 도달 시 다음 날 재개 및 필요시 §7 규칙(25% 우선 제외, 78건)을 적용한다.
 - **저장소 외 확인 필요:** 팀 제안서 원문 최종 대조 및 팀원 영상처리 과목 동시 수강 중복 여부(안내서 1쪽)는 별도 확인.
+
+### HS-02 실행표·평가 검증 기록 (2026-11-26)
+
+- **`experiments.py` 소유자 매핑 반영(`ecab678`):** `B0/B0+ → 동섭`, `F1/F2 → 환호`, `F3/F4 → 현성`으로 §6 표와 일치시킴.
+- **임시 경로 가상 로그 검증:** `tune` 54행(소유자별 18행), `select` 공통 LR 선택(동률 시 작은 LR 우선), `core` 54행 중 `seed 0` 18행 `reuse_tuning_checkpoint` 확인.
+- **Colab Drive 실측 확인:**
+  - `tune_plan.csv` 생성 및 소유자 열 확인 완료 (`/content/drive/MyDrive/Deep_learning/results/tune_plan.csv`).
+  - `colab_smoke_b0/last.pt` 대상 `evaluate.py --flops` 실행으로 `test.csv` 생성 확인 (`params=269,722`, `flops=40,927,872`, `flops_unsupported={"aten::add": 9, "aten::mean": 1, "aten::pad": 3, "aten::rsub": 1}`, `error_pct=80.03%`).
