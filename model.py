@@ -71,8 +71,18 @@ class Classifier(nn.Module):
 
 
 def build_model(name, **options):
+    """Build one of MODELS for CIFAR-10.
+
+    Input: float tensor (N, 3, 32, 32). Output: logits before softmax (N, 10).
+    ``model.backbone(images)`` returns S1~S3 maps (N,16,32,32), (N,32,16,16), (N,64,8,8).
+    Options: ``stages=(1, 2, 3)`` (increasing, must include 3; B0/B0+ always use S3),
+    ``projection="linear"`` or ``"pad"``, ``uniform=False`` (F3 only),
+    ``stop_gradient=False``. Invalid names or options raise ValueError.
+    Move the model with ``.to(device)`` in the caller.
+    """
     return Classifier(name, **options)
 
 
 def parameter_count(model):
+    """Return the number of trainable parameters (B0: 269,722)."""
     return sum(p.numel() for p in model.parameters() if p.requires_grad)

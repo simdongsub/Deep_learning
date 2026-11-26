@@ -67,3 +67,49 @@ def test_stop_gradient_only_removes_direct_intermediate_path():
         assert (stem_grad is None) == detach
         assert head_grad is not None
         assert torch.autograd.grad(final.sum(), stem_weight)[0].abs().sum() > 0
+
+
+def test_parameter_counts():
+    expected = {"B0": 269722, "B0+": 285266, "F1": 272922,
+                "F2": 285274, "F3": 272925, "F4": 275050}
+    assert {name: parameter_count(build_model(name)) for name in MODELS} == expected
+
+
+def test_fusion_formulas():
+    torch.manual_seed(0)
+    images = torch.randn(4, 3, 32, 32)
+    for name in MODELS:
+        model = build_model(name).eval()
+        vectors = model.vectors(images)
+        if name == "B0":
+            expected = vectors[0]
+        elif name == "B0+":
+            expected = vectors[0] + model.extra(vectors[0])
+        elif name == "F1":
+            expected = sum(vectors)
+        elif name == "F2":
+            expected = model.fusion.reduce(torch.cat(vectors, dim=1))
+        elif name == "F3":
+            weights = model.fusion.weights()
+            assert torch.allclose(weights.sum(), torch.tensor(1.0))
+            expected = sum(w * v for w, v in zip(weights, vectors))
+        else:
+            _, gates = model(images, return_gates=True)
+            assert not torch.allclose(gates[0], gates[1])
+            expected = (torch.stack(vectors, dim=1) * gates).sum(dim=1)
+        assert torch.allclose(model(images), model.classifier(expected), atol=1e-5)
+
+
+def test_uniform_and_pad_options():
+    uniform = build_model("F3", uniform=True)
+    assert not any("scores" in key for key, _ in uniform.named_parameters())
+    model = build_model("F1", projection="pad")
+    assert sum(p.numel() for p in model.project.parameters()) == 0
+    first, second, _ = model.vectors(torch.randn(2, 3, 32, 32))
+    assert (first[:, 16:] == 0).all() and (second[:, 32:] == 0).all()
+
+
+@pytest.mark.parametrize("options", [{"stages": (1, 2)}, {"stages": (3, 1)}, {"projection": "x"}])
+def test_invalid_options(options):
+    with pytest.raises(ValueError):
+        build_model("F1", **options)
