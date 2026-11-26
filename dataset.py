@@ -6,9 +6,10 @@ import torch
 from torch.utils.data import DataLoader, Subset
 from torchvision import datasets, transforms
 
+from utils import load_config
+
 ROOT = Path(__file__).resolve().parent
-MEAN = (0.4914, 0.4822, 0.4465)
-STD = (0.2470, 0.2435, 0.2616)
+DEFAULT_CONFIG = ROOT / "configs/default.yaml"
 
 
 def split_indices(targets, ratio, split_seed):
@@ -28,14 +29,24 @@ def split_indices(targets, ratio, split_seed):
     return train, validation
 
 
-def preprocess(training=False):
-    ops = [transforms.RandomCrop(32, padding=4), transforms.RandomHorizontalFlip()] if training else []
-    return transforms.Compose([*ops, transforms.ToTensor(), transforms.Normalize(MEAN, STD)])
+def preprocess(training=False, data_config=None):
+    config = data_config or load_config(DEFAULT_CONFIG)["data"]
+    ops = []
+    if training:
+        ops.append(transforms.RandomCrop(config["crop_size"], padding=config["crop_padding"]))
+        if config["horizontal_flip"]:
+            ops.append(transforms.RandomHorizontalFlip())
+    return transforms.Compose([
+        *ops, transforms.ToTensor(), transforms.Normalize(config["mean"], config["std"]),
+    ])
 
 
-def train_loaders(root, ratio, split_seed, seed, batch_size, workers, pin_memory=False):
-    training = datasets.CIFAR10(root, train=True, download=False, transform=preprocess(True))
-    validation = datasets.CIFAR10(root, train=True, download=False, transform=preprocess())
+def train_loaders(root, ratio, split_seed, seed, batch_size, workers, pin_memory=False,
+                  data_config=None):
+    training = datasets.CIFAR10(root, train=True, download=False,
+                                transform=preprocess(True, data_config))
+    validation = datasets.CIFAR10(root, train=True, download=False,
+                                  transform=preprocess(False, data_config))
     train_ids, val_ids = split_indices(training.targets, ratio, split_seed)
     generator = torch.Generator().manual_seed(seed)
     common = dict(batch_size=batch_size, num_workers=workers, pin_memory=pin_memory)
@@ -45,8 +56,9 @@ def train_loaders(root, ratio, split_seed, seed, batch_size, workers, pin_memory
     )
 
 
-def test_loader(root, batch_size, workers):
-    test = datasets.CIFAR10(root, train=False, download=False, transform=preprocess())
+def test_loader(root, batch_size, workers, data_config=None):
+    test = datasets.CIFAR10(root, train=False, download=False,
+                            transform=preprocess(False, data_config))
     return DataLoader(test, batch_size=batch_size, num_workers=workers)
 
 
@@ -58,4 +70,16 @@ def download(root):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Download and verify CIFAR-10")
     parser.add_argument("--data-dir", type=Path, default=ROOT / "data")
-    download(parser.parse_args().data_dir)
+    root = parser.parse_args().data_dir
+    download(root)
+    training = datasets.CIFAR10(root, train=True, download=False)
+    testing = datasets.CIFAR10(root, train=False, download=False)
+    split_seed = load_config(DEFAULT_CONFIG)["split_seed"]
+    for ratio in (100, 25, 10):
+        train_ids, val_ids = split_indices(training.targets, ratio, split_seed)
+        counts = [sum(training.targets[index] == label for index in train_ids)
+                  for label in range(10)]
+        assert not set(train_ids).intersection(val_ids)
+        print(f"{ratio}%: train={len(train_ids)}, validation={len(val_ids)}, "
+              f"per_class={counts}")
+    print(f"official_test={len(testing)}")
