@@ -5,6 +5,15 @@ from itertools import product
 from experiments import add_paths, core_id, record, validation_score
 from utils import ROOT, load_config, write_csv
 
+ABLATION_OWNERS = {
+    "s3": "동섭",
+    "s23": "동섭",
+    "s13": "환호",
+    "pad": "환호",
+    "uniform": "현성",
+    "detach": "현성",
+}
+
 
 def main():
     parser = argparse.ArgumentParser(description="Plan 6 ablation variants × 3 seeds")
@@ -39,7 +48,7 @@ def main():
     rows = []
     for (label, model, options), seed in product(variants, seeds):
         row = record(f"abl_{label}_{model}_r{args.ratio}_s{seed}_lr{lr:g}", model,
-                     args.ratio, seed, lr, epochs, "C", results, checkpoints, options)
+                     args.ratio, seed, lr, epochs, ABLATION_OWNERS[label], results, checkpoints, options)
         row["reference"] = core_id(model, args.ratio, seed, lr)
         rows.append(row)
     write_csv(results / "ablation_plan.csv", rows)
