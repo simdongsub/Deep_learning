@@ -8,6 +8,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import torch
+import numpy as np
 import yaml
 
 ROOT = Path(__file__).resolve().parent
@@ -20,16 +21,21 @@ def load_config(path):
 
 def set_seed(seed):
     random.seed(seed)
+    np.random.seed(seed)
     torch.manual_seed(seed)
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
 
 
 def device_for(name):
-    device = torch.device("cuda" if name == "auto" and torch.cuda.is_available()
-                          else "cpu" if name == "auto" else name)
+    if name == "auto":
+        name = ("cuda" if torch.cuda.is_available() else
+                "mps" if torch.backends.mps.is_available() else "cpu")
+    device = torch.device(name)
     if device.type == "cuda" and not torch.cuda.is_available():
         raise RuntimeError("CUDA is unavailable")
+    if device.type == "mps" and not torch.backends.mps.is_available():
+        raise RuntimeError("MPS is unavailable; use --device cpu")
     return device
 
 
@@ -80,17 +86,27 @@ def save_checkpoint(path, state):
 
 
 def rng_state(loader):
+    numpy_state = np.random.get_state()
     return {
         "python": random.getstate(),
+        # Plain Python values keep torch.load(weights_only=True) compatible.
+        "numpy": (numpy_state[0], numpy_state[1].tolist(), *numpy_state[2:]),
         "torch": torch.get_rng_state(),
         "cuda": torch.cuda.get_rng_state_all() if torch.cuda.is_available() else [],
+        "mps": torch.mps.get_rng_state() if torch.backends.mps.is_available() else None,
         "loader": loader.generator.get_state(),
     }
 
 
 def restore_rng(state, loader):
     random.setstate(state["python"])
+    if "numpy" in state:
+        name, keys, position, gaussian, cached = state["numpy"]
+        np.random.set_state((name, np.asarray(keys, dtype=np.uint32),
+                             position, gaussian, cached))
     torch.set_rng_state(state["torch"])
     if state["cuda"] and torch.cuda.is_available():
         torch.cuda.set_rng_state_all(state["cuda"])
+    if state.get("mps") is not None and torch.backends.mps.is_available():
+        torch.mps.set_rng_state(state["mps"])
     loader.generator.set_state(state["loader"])

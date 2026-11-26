@@ -8,4 +8,10 @@ scheduler: CosineAnnealingLR
 seeds: [0, 1, 2]
 split_seed: 2026
 ratios: [100, 25, 10]
-workers: 2
+workers: 0
+data:
+  mean: [0.4914, 0.4822, 0.4465]
+  std: [0.2470, 0.2435, 0.2616]
+  crop_size: 32
+  crop_padding: 4
+  horizontal_flip: true
